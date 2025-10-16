@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Math Module 2 Review</title>
+  <style>
+    body {
+      font-family: "Comic Sans MS", "Comic Neue", Arial, sans-serif;
+      background: #f0f8ff;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    header {
+      background: linear-gradient(90deg, #0074d9, #39c0ed);
+      color: white;
+      padding: 1.2rem;
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 1;
+    }
+    .hidden { display: none; }
+    button {
+      background: #0074d9;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #005fa3; }
+    .feedback {
+      margin-top: 1rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .correct { color: #28a745; }
+    .incorrect { color: #dc3545; }
+    .score {
+      font-size: 1.3rem;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    .message {
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+    .progress {
+      font-size: 1rem;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+    }
+    .progress-bar-container {
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 18px;
+      margin-bottom: 1rem;
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, #39c0ed, #28a745);
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    label { display: block; margin: 6px 0; cursor: pointer; }
+    .answer-btn.correct::after { content: " ✅"; color: #28a745; font-weight: bold; }
+    .answer-btn.incorrect::after { content: " ❌"; color: #dc3545; font-weight: bold; }
+    #confetti-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    📘 Math Module 2 Review
+  </header>
+  <canvas id="confetti-canvas"></canvas>
+  <div class="container">
+    <div id="start-screen">
+      <h2>Welcome! Pick a Test Form:</h2>
+      <button onclick="startTest('A')">Form A</button>
+      <button onclick="startTest('B')">Form B</button>
+    </div>
+    <div id="quiz-screen" class="hidden">
+      <p class="progress" id="progress"></p>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <h2 id="question-text"></h2>
+      <div id="answers"></div>
+      <div class="feedback" id="feedback"></div>
+      <button id="next-btn" class="hidden" onclick="nextQuestion()">Next Question ➡️</button>
+    </div>
+    <div id="end-screen" class="hidden">
+      <h2>🎉 Test Complete!</h2>
+      <p class="score" id="final-score"></p>
+      <p class="score" id="percent-score"></p>
+      <p class="message" id="performance-message"></p>
+      <button onclick="restart()">🔄 Try Again</button>
+    </div>
+  </div>
+  <audio id="ding-sound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <audio id="buzz-sound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<script>
+const tests = {
+  A: [
+    {q:"What is the sum of 46,359 + 1,273?", options:["47,522","47,632","58,089","59,089"], answer:"47,632"},
+    {q:"How much greater is 579,611 than 185,105?", options:["394,506","394,516","405,494","414,514"], answer:"394,516"},
+    {q:"A rectangle has a length of 7 meters and a width of 3 meters. What is the perimeter of the rectangle in meters?", options:["10","20","21","42"], answer:"20"},
+    {q:"The width of a field is 14 yards, and the length is 3 yards longer than the width. What is the perimeter of the field in yards?", options:["17","34","42","62"], answer:"34"},
+    {q:"What is the difference between 682,741 and 95,126?", options:["587,605","587,615","597,615","587,516"], answer:"587,615"},
+    {q:"What is the sum of 7,218 and 32,849?", options:["39,057","39,067","40,067","41,067"], answer:"40,067"},
+    {q:"Zahra's square garden has sides that each measure 7 feet. How many feet of fencing will she need to go all the way around her garden?", options:["14","21","28","49"], answer:"28"},
+    {q:"Bailey wrote the number 187,296, and Alex wrote the number 592,479. What is the estimated sum of their numbers when each is rounded to the nearest hundred thousand?", options:["700,000","800,000","900,000","1,000,000"], answer:"800,000"},
+    {q:"A rectangle is 8 inches long and 4 inches wide. What is its perimeter?", options:["12 inches","16 inches","20 inches","24 inches"], answer:"24 inches"},
+    {q:"The total fair attendance last year was 162,573 people. This year, 159,865 people attended. How many fewer people attended this year than last year?", options:["2,608","2,708","2,808","2,908"], answer:"2,708"},
+    {q:"Arnold has a rectangular rug that is 5 feet long and 3 feet wide. What is the perimeter of the rug?", options:["12 ft","14 ft","15 ft","16 ft"], answer:"16 ft"},
+    {q:"A female white rhinoceros weighs 3,981 pounds. A male white rhinoceros weighs 5,032 pounds. How many more pounds does the male weigh than the female?", options:["1,041","1,051","1,061","1,071"], answer:"1,051"},
+    {q:"James has a goal of reading 3,250 pages. He reads 384 pages the first month. James writes the expression 3,300 - 400 to estimate how many more pages he needs to read. Is his estimate reasonable?", options:["No, he should have rounded 3,250 to 3,200 instead.","No, he should have subtracted from 3,300 instead of adding.","Yes, he correctly rounded each number to the nearest hundred.","Yes, he correctly rounded each number to the nearest thousand."], answer:"Yes, he correctly rounded each number to the nearest hundred."},
+    {q:"James has read 384 of his 3,250 pages. How many pages does he have left to reach his goal?", options:["2,856","2,866","2,876","2,886"], answer:"2,866"},
+  ],
+  B: [
+    {q:"What is the sum of 23,187 + 1,596?", options:["39,147","38,047","24,783","24,673"], answer:"24,783"},
+    {q:"How much greater is 716,524 than 381,205?", options:["335,319","335,329","464,681","475,321"], answer:"335,329"},
+    {q:"The width of a rectangle is 5 meters and the length is 12 meters. What is the perimeter of the rectangle in meters?", options:["17","34","60","120"], answer:"34"},
+    {q:"The width of a park is 25 yards, and the length is 15 yards longer than the width. What is the perimeter of the park in yards?", options:["40","80","130","160"], answer:"80"},
+    {q:"What is the difference between 213,864 and 64,237?", options:["149,617","149,627","149,637","149,647"], answer:"149,627"},
+    {q:"What is the sum of 6,519 and 53,724?", options:["60,233","60,243","60,253","60,263"], answer:"60,243"},
+    {q:"Raymond makes a square art design with each side 6 inches long. How many inches of ribbon will he need to go around it?", options:["12","18","24","36"], answer:"24"},
+    {q:"Kelley wrote 613,794 and Jayson wrote 297,658. What is the estimated sum of their numbers when each is rounded to the nearest hundred thousand?", options:["700,000","800,000","900,000","1,000,000"], answer:"900,000"},
+    {q:"A rectangle is 12 inches long and 6 inches wide. What is the perimeter?", options:["18","24","30","36"], answer:"36"},
+    {q:"A recycling center received 183,762 pounds of materials last month and 188,135 pounds this month. How many fewer pounds were received last month than this month?", options:["4,353","4,363","4,373","4,383"], answer:"4,373"},
+    {q:"Carmen bought a rectangular painting that measures 7 feet long and 4 feet wide. What is the perimeter of the painting?", options:["18 ft","20 ft","22 ft","24 ft"], answer:"22 ft"},
+    {q:"A theater has 2,791 seats. An auditorium has 2,477 seats. How many more seats does the theater have than the auditorium?", options:["314","324","334","344"], answer:"314"},
+    {q:"A truck driver has a 1,256-mile route to complete. She travels 437 miles the first day. She writes the expression 1,300 - 400 to estimate how many miles remain. Is her estimate reasonable?", options:["No, she should have rounded 1,256 to 1,200 instead.","No, she should have subtracted from 1,300 instead of adding.","Yes, she correctly rounded each number to the nearest ten.","Yes, she correctly rounded each number to the nearest hundred."], answer:"Yes, she correctly rounded each number to the nearest hundred."},
+    {q:"A truck driver has a 1,256-mile route and has already traveled 437 miles. How many miles are left to travel?", options:["809","819","829","839"], answer:"819"},
+  ]
+};
+let currentTest = [];
+let currentIndex = 0;
+let score = 0;
+
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+function playSound(type) {
+  if (type === "correct") {
+    document.getElementById("ding-sound").play();
+  } else {
+    document.getElementById("buzz-sound").play();
+  }
+}
+
+function startTest(form) {
+  currentTest = JSON.parse(JSON.stringify(tests[form]));
+  currentTest = shuffle(currentTest);
+  currentTest.forEach(q => {
+    q.options = shuffle(q.options);
+  });
+  currentIndex = 0;
+  score = 0;
+  document.getElementById("start-screen").classList.add("hidden");
+  document.getElementById("quiz-screen").classList.remove("hidden");
+  showQuestion();
+}
+
+function showQuestion() {
+  const qObj = currentTest[currentIndex];
+  document.getElementById("progress").innerText = `Question ${currentIndex + 1} of ${currentTest.length}`;
+  const percent = ((currentIndex) / currentTest.length) * 100;
+  document.getElementById("progress-bar").style.width = percent + "%";
+
+  document.getElementById("question-text").innerText = qObj.q;
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+
+  qObj.options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.innerText = opt;
+    btn.className = "answer-btn";
+    btn.onclick = () => checkAnswer(opt, qObj.answer, btn);
+    answersDiv.appendChild(btn);
+  });
+  document.getElementById("feedback").innerText = "";
+}
+
+function checkAnswer(selected, correct, btn) {
+  if (selected === correct) {
+    document.getElementById("feedback").innerText = "✅ Correct!";
+    document.getElementById("feedback").className = "feedback correct";
+    btn.classList.add("correct");
+    score++;
+    playSound("correct");
+  } else {
+    document.getElementById("feedback").innerText = "❌ Incorrect. Correct answer: " + correct;
+    document.getElementById("feedback").className = "feedback incorrect";
+    btn.classList.add("incorrect");
+    playSound("incorrect");
+  }
+  Array.from(document.getElementById("answers").children).forEach(b => b.disabled = true);
+  document.getElementById("next-btn").classList.remove("hidden");
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex < currentTest.length) {
+    showQuestion();
+  } else {
+    endTest();
+  }
+}
+
+function endTest() {
+  document.getElementById("quiz-screen").classList.add("hidden");
+  document.getElementById("end-screen").classList.remove("hidden");
+  const percent = Math.round((score / currentTest.length) * 100);
+  document.getElementById("progress-bar").style.width = "100%";
+  document.getElementById("final-score").innerText = `You scored ${score} out of ${currentTest.length}.`;
+  document.getElementById("percent-score").innerText = `That’s ${percent}%.`;
+
+  let message = "";
+  if (percent === 100) {
+    message = "🌟 Excellent work! Perfect score!";
+  } else if (percent >= 80) {
+    message = "👍 Great job! You really know this material.";
+  } else if (percent >= 60) {
+    message = "👌 Not bad! Keep practicing to improve.";
+  } else {
+    message = "💡 Keep trying! Review the lessons and practice again.";
+  }
+  document.getElementById("performance-message").innerText = message;
+
+  launchConfetti();
+}
+
+// Confetti effect
+function launchConfetti() {
+  const duration = 3 * 1000;
+  const end = Date.now() + duration;
+
+  (function frame() {
+    confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0 } });
+    confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1 } });
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  })();
+}
+
+function restart() {
+  document.getElementById("end-screen").classList.add("hidden");
+  document.getElementById("start-screen").classList.remove("hidden");
+  document.getElementById("progress-bar").style.width = "0%";
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</body>
+</html>
